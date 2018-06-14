@@ -1,0 +1,81 @@
+---
+title: "Practical Machine Learning"
+output:
+  html_document: default
+  word_document: default
+---
+
+##Introduction:
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
+
+The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Loading in data
+```{r}
+raw_training <- read.csv('./pml-training.csv', header=T)
+raw_testing <- read.csv('./pml-testing.csv', header=T)
+```
+
+Loading the caret packages
+```{r}
+library(caret)
+```
+
+Previewing the data to see if any columns are empty or can be excluded
+```{r}
+str(raw_training)
+```
+
+I need to remove the columns that are empty or have NA's I can build a strong model. I will not be including them in the model.
+```{r}
+cleanup <- sapply(names(raw_testing), function(x) all(is.na(raw_testing[,x])==TRUE))
+nonames <- names(cleanup)[cleanup==FALSE]
+nonames <- nonames [-(1:7)]
+nonames <- nonames [1:(length(nonames)-1)]
+```
+Now I will separate the training data into 2 setOne set (70%) is used for the purpose of training and building the Random Forest model, 
+##and the other (30%) will be used to cross validate the model. 
+```{r}
+training_sample <- createDataPartition(y=raw_training$classe, p=0.7, list=FALSE)
+training <- raw_training[training_sample, ]
+testing <- raw_training[-training_sample, ]
+```
+Cross Validating the model to use specific splits of data improve the accuracy.
+```{r}
+fitControl <- trainControl(method='cv', number = 3)
+```
+Now I will build the model using the Random Forest model because I am the familiar with the model
+``` {r}
+rfmodel <- train(
+                 classe ~ ., 
+                 data=training[, c('classe', nonames)],
+                 trControl=fitControl,
+                 method='rf',
+                 ntree=100)
+rfmodel
+```
+As you can see, the Random Forest Model has a high accuracy so I think this model will be sufficient to use for the prediction of the 20 testing variables.
+
+Now I will use a view the Predictions and use a Confusion Matrix to describe the model against the Testing set and the Training Set
+```{r}                 
+prediction <- predict(rfmodel, newdata=testing)
+ConfusionMatrix <- confusionMatrix(prediction, testing$classe)
+print(ConfusionMatrix)
+
+prediction <- predict(rfmodel, newdata=training)
+ConfusionMatrix <- confusionMatrix(prediction, training$classe)
+print(ConfusionMatrix)
+```
+Finally, I will predict the classe of the 20 test observations in the raw testing data by using the model created.
+```{r}
+predictionTesting <- predict(rfmodel, newdata=raw_testing)
+print(predictionTesting)
+```
+##Conclusion
+I will use the results above to answer to 20 multiple choice questions. Based on the accuracy rates of the RF model, I think my results are fairly accurate to predict the sample observations.
+After taking themultiple choice quiz, I answered all of the questions correctly.
+
