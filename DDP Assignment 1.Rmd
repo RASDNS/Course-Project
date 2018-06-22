@@ -1,0 +1,31 @@
+---
+title: "DDP Assignment 1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## My Map
+
+
+
+```{r, eval=FALSE}
+install.packages("leaflet")
+library(leaflet)
+my_map <- leaflet() %>%
+addTiles()
+View(my_map)
+my_map = leaflet()
+my_map = addTiles(my_map)
+addMarkers(my_map, lng = -96.79, lat = 32.77, popupOptions = "Home")
+addCircles(my_map, lng = -96.79, lat = 32.77, radius = 100, popupOptions = "Home")
+
+my_map
+
+
+
+```
+
+
